@@ -1,4 +1,4 @@
-# Log4perl--KISS
+# Log4perl::KISS package
 Simple logging functions using Log::Log4perl - simplest than EASY!
 
 ## Why?
