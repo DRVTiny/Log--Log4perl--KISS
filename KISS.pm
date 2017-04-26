@@ -39,7 +39,7 @@ EOLOGCONF
     return unless my $logSevN=$logSev2N{$logSev=lc $logSev};
     return 1 if $logSevN<$logger->level;
     my ($firstMsg,$nShift)=ref($_[0]) eq 'CODE'
-        ? ($_[0]->(ref($_[1]) eq 'ARRAY'?@{$_[1]}:()), 1+(ref $_[1] eq 'ARRAY'))
+        ? (join(' '=>$_[0]->(ref($_[1]) eq 'ARRAY'?@{$_[1]}:())), 1+(ref $_[1] eq 'ARRAY'))
         : ($_[0],1);
     splice(@_,0,$nShift);
     $logger->log($logSevN => 
