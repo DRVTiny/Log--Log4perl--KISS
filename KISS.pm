@@ -38,16 +38,18 @@ EOLOGCONF
     return unless my $logSev=shift;
     return unless my $logSevN=$logSev2N{$logSev=lc $logSev};
     return 1 if $logSevN<$logger->level;
-    my ($firstMsg,$nShift)=ref($_[0]) eq 'CODE'
-        ? (join(' '=>$_[0]->(ref($_[1]) eq 'ARRAY'?@{$_[1]}:())), 1+(ref $_[1] eq 'ARRAY'))
-        : ($_[0],1);
-    splice(@_,0,$nShift);
+    
+    if (ref $_[0] eq 'CODE') {
+        splice(@_,0,1+(ref $_[1] eq 'ARRAY'), $_[0]->(ref $_[1] eq 'ARRAY'?@{$_[1]}:()));
+#        unshift @_, shift->(ref $_[1] eq 'ARRAY'?do { say "HERE!"; @{scalar(shift)} }:())
+    }
+    
     $logger->log($logSevN => 
-        @_ 
-            ? $firstMsg=~/(?<!%)%[sdfg]/
-                ? sprintf($firstMsg, @_)
-                : join(' ' => $firstMsg, @_)
-            : $firstMsg
+        $#_ 
+            ? $_[0]=~/(?<!%)%[sdfg]/
+                ? sprintf($_[0] => @_[1..$#_])
+                : join(' ' => @_)
+            : $_[0]
     );
 }
 
