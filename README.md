@@ -20,11 +20,11 @@ Log4perl::KISS - Human-friendly logging functions out-of-the-box. Just use it!
 
 # DESCRIPTION
 
-**Log4perl::KISS** is a tiny (<100 rows of code) wrapper for [Log::Log4perl](search.cpan.org/perldoc/Log::Log4perl) provides simple,
+**Log4perl::KISS** is a tiny (<100 rows of code) wrapper for [Log::Log4perl](http://search.cpan.org/perldoc/Log::Log4perl) provides simple,
 but very powerful logging functions such as debug, trace, info, fatal, logdie,
 which format your message or doing nothing but not both.
 
-It is... just simplest than EASY!
+It is... just simplest than [EASY](http://search.cpan.org/~mschilli/Log-Log4perl-1.49/lib/Log/Log4perl.pm#Stealth_loggers)!
 
 ## WHY
 
