@@ -5,7 +5,14 @@ Log4perl::KISS - Human-friendly logging functions out-of-the-box. Just use it!
 # SYNOPSIS
 
     use Log4perl::KISS;
+
+    # ! Only if you DONT want to use Log::Log4perl->init(...) explicitly
+    log_open('/var/log/application/logfile'); 	# To write to the file instead of a screen 
+						# Please read carefully further notes about "HELPER FUNCTIONS"
+    # ! Only if you DONT want to use Log::Log4perl->init(...) explicitly
+    log_level('INFO');				# Default log-level is "DEBUG"
     
+    # Log4perl will be initialised on first call to any of the logger functions if you havent do this yourself earlier
     debug {'Just a %s on the '.($_[0]?'bus':'train').' trying make his way %s...', 'stranger'} [1], 'home';
     
     info {'Cept for the %s maybe in %s'}, qw/Pope Rome/;
@@ -20,7 +27,7 @@ Log4perl::KISS - Human-friendly logging functions out-of-the-box. Just use it!
 
 # DESCRIPTION
 
-**Log4perl::KISS** is a tiny (<100 rows of code) wrapper for [Log::Log4perl](http://search.cpan.org/perldoc/Log::Log4perl) provides simple,
+**Log4perl::KISS** is a tiny (~100 rows of code) wrapper for [Log::Log4perl](http://search.cpan.org/perldoc/Log::Log4perl) provides simple,
 but very powerful logging functions such as debug, trace, info, fatal, logdie,
 which format your message or doing nothing but not both.
 
@@ -39,6 +46,18 @@ It is... just simplest than [EASY](http://search.cpan.org/~mschilli/Log-Log4perl
   or just so:
   * `info_ "I have located the %s myself", "barrel of Ambrosia"`.
   * Simply `error_ 'Something awful','goes','wrong'` works well too :)
+
+# HELPER FUNCTIONS
+
+You can use special helper functions log_open to set target log file instead of stderr and log_level - to set desired log level
+But remember that this functions is a simply wrappers around Log::Log4perl initialisation in case you didnt initialise it before 
+first call of any of the log-writers (debug_, info_, trace_, etc...)
+
+So you can use it only before any log output and only if you didnt initialise Log4perl properly by yourself.
+
+In other words, log_open and log_level is a helpers for simplifying initial Log4perl configuration - do not expect that log_open() 
+can be used to switch log file "on the fly" or log_level() - to change log level at run time. It is not intended to do so, this is
+only a "sugar" for VERY lazy people. Like me, for example :)
 
 # LICENSE
 
