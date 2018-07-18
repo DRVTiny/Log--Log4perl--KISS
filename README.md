@@ -24,6 +24,17 @@ Log4perl::KISS - Human-friendly logging functions out-of-the-box. Just use it!
     debug_ 'So please stop explaining. %s', q{Don't tell me 'cause it hurts};
     
     debug_ qw/any key be no key/;
+    
+    my $hook_id = after_error_hook_add sub { 
+      $redis->publish( 'some_channel' => ${$_[0]} );
+      say STDERR ">>>> ${$_[0]} <<<<";
+    };
+    # This message will be logged, published to Redis, printed to STDERR with say
+    error_ 'Some error';
+    # Deactivate hook
+    after_error_hook_del $hook_id;
+    # Hook deactivated, so the message will be logged only
+    error_ 'Some other error'; 
 
 # DESCRIPTION
 
