@@ -86,8 +86,7 @@ my %afterLogHooks;
             my $p_handler = refaddr($handler);
             $afterLogHooks{$sev}{'cb'}{$p_handler} or weaken(
                 $afterLogHooks{$sev}{'ord'}[$#{$afterLogHooks{$sev}{'ord'}} + 1] = 
-                $afterLogHooks{$sev}{'cb'}{$p_handler} = 
-                $handler
+                \($afterLogHooks{$sev}{'cb'}{$p_handler} = $handler)
             );
             return $p_handler
         };
