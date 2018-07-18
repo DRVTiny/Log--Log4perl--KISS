@@ -139,7 +139,7 @@ sub log_ {
     $doBeforeLog and $doBeforeLog->($logMsg);
     my $ret = $logger->log($logSevN => $logMsg);
     if ( exists $afterLogHooks{$logSev}{'ord'} ) {
-        $_->(\$logMsg) for @{$afterLogHooks{$logSev}{'ord'}}
+        ${$_}->(\$logMsg) for @{$afterLogHooks{$logSev}{'ord'}}
     }
     return $doAfterLog ? $doAfterLog->($ret, $logMsg) : $ret;
 }
