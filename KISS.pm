@@ -3,27 +3,38 @@ use 5.16.1;
 use strict;
 use warnings;
 use utf8;
+use constant DONE => 1;
 binmode $_, ':utf8' for *STDOUT, *STDERR;
 use Exporter qw(import);
 
 use Log::Log4perl;
 use Log::Log4perl::Level;
+use Scalar::Util qw(refaddr weaken);
 use Carp qw(confess);
 
-my @logSevs=qw/trace debug info warn error fatal/;
-my %logMethodDefs=(
+my @logSevs = qw/trace debug info warn error fatal/;
+my %logMethodDefs = (
     'logdie'=>[undef,sub { confess($_[1]) }, $FATAL]
 );
-my @logMethods=keys %logMethodDefs;
-my %logSev2N=do {
+my @logMethods = keys %logMethodDefs;
+my %logSev2N = do {
     no strict 'refs';
     map {my $U=uc($_); ($_=>$$U, uc($_)=>$$U) } @logSevs;
 };
 
-our @EXPORT=our @EXPORT_OK=(qw/log_open log_level/, map { $_.'_', $_ } @logSevs, @logMethods);
+our @EXPORT = our @EXPORT_OK = (
+    qw/log_open log_level/,
+    map { 
+        my $sev = $_;
+        (
+            $sev . '_',
+            $sev,
+            map sprintf('after_%s_hook_%s', $sev, $_), qw/add del/
+        )
+    } @logSevs, @logMethods);
 
 Log::Log4perl->wrapper_register(__PACKAGE__);
-my %fileOpenModes=(
+my %fileOpenModes = (
     '>' => 'clobber',
     '>>' => 'append',
     'write' => 'clobber',
@@ -66,6 +77,29 @@ sub log_level {
     $logLevel=uc($_[0])
 }
 
+my %afterLogHooks;
+{
+    no strict 'refs';
+    for my $sev ( @logSevs, @logMethods ) {
+        *{__PACKAGE__ . '::after_' . $sev . '_hook_add'} = sub {
+            my $handler = $_[0];
+            my $p_handler = refaddr($handler);
+            $afterLogHooks{$sev}{'cb'}{$p_handler} or weaken(
+                $afterLogHooks{$sev}{'ord'}[$#{$afterLogHooks{$sev}{'ord'}} + 1] = 
+                $afterLogHooks{$sev}{'cb'}{$p_handler} = 
+                $handler
+            );
+            return $p_handler
+        };
+        *{__PACKAGE__ . '::after_' . $sev . '_hook_del'} = sub {
+            return unless exists $afterLogHooks{$sev}{'cb'}{$_[0]};
+            delete $afterLogHooks{$sev}{'cb'}{$_[0]};
+            @{$afterLogHooks{$sev}{'ord'}} = grep defined($_), @{$afterLogHooks{$sev}{'ord'}};
+            return DONE
+        };
+    }
+}
+
 sub getL4PConfig {
     my ($appndrType, $appndrConfig)=@_;
     my $ptrn="log4perl.appender.${appndrType}";
@@ -87,7 +121,7 @@ sub log_ {
                ) && Log::Log4perl->get_logger() 
                      or return;
     my ($doBeforeLog,$doAfterLog);
-    my $logSevN=$logSev2N{$logSev=lc $logSev} 
+    my $logSevN = $logSev2N{$logSev = lc $logSev} 
                  || ($logMethodDefs{$logSev}
                      ? do { ($doBeforeLog,$doAfterLog,$_)=@{$logMethodDefs{$logSev}}; $_ }
                      : undef) 
@@ -104,26 +138,24 @@ sub log_ {
                     : join(' ' => @_)
                 : $_[0];
     $doBeforeLog and $doBeforeLog->($logMsg);
-    my $ret=$logger->log($logSevN => 
-        $#_
-            ? $_[0]=~/(?<!%)%[sdfg]/
-                ? sprintf($_[0] => @_[1..$#_])
-                : join(' ' => @_)
-            : $_[0]
-    );
-    return $doAfterLog?$doAfterLog->($ret,$logMsg):$ret;
+    my $ret = $logger->log($logSevN => $logMsg);
+    if ( exists $afterLogHooks{$logSev}{'ord'} ) {
+        $_->(\$logMsg) for @{$afterLogHooks{$logSev}{'ord'}}
+    }
+    return $doAfterLog ? $doAfterLog->($ret, $logMsg) : $ret;
 }
 
 {    
     no strict 'refs';
     for (@logSevs,@logMethods) {
-        *{__PACKAGE__.'::'.$_.'_'}=eval sprintf('sub { log_(q{%s}, @_) }', $_);
-        *{__PACKAGE__.'::'.$_}=eval sprintf('sub (&@) { log_(q{%s}, @_) }', $_);
+        my $methodFQName = __PACKAGE__ . '::' . $_;
+        *{$methodFQName . '_'} 	= eval sprintf('sub      { log_( q{%s}, @_ ) }', $_);
+        *{$methodFQName} 	= eval sprintf('sub (&@) { log_( q{%s}, @_ ) }', $_);
     }
 }
 
 sub set_logger {
-    my $L=shift;
+    my $L = shift;
     return $L
         ? (($L and ref($L) and blessed($L) and !(grep !$L->can($_), qw/debug info warn error fatal logdie/)) && ($pkgLoggers{scalar caller}=$L))
         : ($pkgLoggers{scalar caller}=Log::Log4perl::initialized()?Log::Log4perl->get_logger():undef)
