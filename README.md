@@ -13,7 +13,7 @@ Log4perl::KISS - Human-friendly logging functions out-of-the-box. Just use it!
     log_level('INFO');				# Default log-level is "DEBUG"
     
     # Log4perl will be initialised on first call to any of the logger functions if you havent do this yourself earlier
-    debug {'Just a %s on the '.($_[0]?'bus':'train').' trying make his way %s...', 'stranger'} [1], 'home';
+    debug {'Just a %s on the ' . ($_[0] ? 'bus' : 'train') . ' trying to make his way %s', 'stranger'} [1], 'home';
     
     info {'Cept for the %s maybe in %s'}, qw/Pope Rome/;
     
@@ -25,15 +25,19 @@ Log4perl::KISS - Human-friendly logging functions out-of-the-box. Just use it!
     
     debug_ qw/any key be no key/;
     
+    # = Brief after-hooks overview =
     my $hook_id = after_error_hook_add sub { 
       $redis->publish( 'some_channel' => ${$_[0]} );
       say STDERR ">>>> ${$_[0]} <<<<";
     };
+    
     # This message will be logged, published to Redis, printed to STDERR with say
     error_ 'Some error';
-    # Deactivate hook
+    
+    # Imagine, that now after-hook is no longer needed: deactivate it!
     after_error_hook_del $hook_id;
-    # Hook deactivated, so the message will be logged only
+    
+    # Hook were deactivated, so the message will be logged only
     error_ 'Some other error'; 
 
 # DESCRIPTION
