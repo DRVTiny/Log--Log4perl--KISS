@@ -1,4 +1,4 @@
-package Log4perl::KISS;
+package Log::Log4perl::KISS;
 use 5.16.1;
 use strict;
 use warnings;

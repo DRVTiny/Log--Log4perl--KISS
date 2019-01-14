@@ -1,10 +1,10 @@
 # NAME
 
-Log4perl::KISS - Human-friendly logging functions out-of-the-box. Just use it!  
+Log::Log4perl::KISS - Human-friendly logging functions out-of-the-box. Just use it!  
 
 # SYNOPSIS
 
-    use Log4perl::KISS;
+    use Log::Log4perl::KISS;
 
     # ! Only if you DONT want to use Log::Log4perl->init(...) explicitly
     log_open('/var/log/application/logfile'); 	# To write to the file instead of a screen 
@@ -42,7 +42,7 @@ Log4perl::KISS - Human-friendly logging functions out-of-the-box. Just use it!
 
 # DESCRIPTION
 
-**Log4perl::KISS** is a tiny (~100 rows of code) wrapper for [Log::Log4perl](http://search.cpan.org/perldoc/Log::Log4perl) provides simple,
+**Log::Log4perl::KISS** is a tiny (~100 rows of code) wrapper for [Log::Log4perl](http://search.cpan.org/perldoc/Log::Log4perl) provides simple,
 but very powerful logging functions such as debug, trace, info, fatal, logdie,
 which format your message or doing nothing but not both.
 
@@ -53,7 +53,7 @@ It is... just simplest than [EASY](http://search.cpan.org/~mschilli/Log-Log4perl
 * Performance: Using code block as a first argument garantie that your output string will be computed only if target log level is enabled
 * Clean syntax: `debug {'Now i want to say "Good bye" for the summer'}` and `debug_ 'You were just a prototype'` - looks clear and obvious
 * Lightweight and fast by design: this is Log::Log4perl wrapper only, not yet-another-logging framework. 89 lines of code that help you work with the best perl logging framework in a comfort manner.
-* Absolute minimum of initialisation: `use Log4perl::KISS` is enough to output clever-formatted messages. No bull shit! Write faster code, that can log more
+* Absolute minimum of initialisation: `use Log::Log4perl::KISS` is enough to output clever-formatted messages. No bull shit! Write faster code, that can log more
 * Rich functional possibilities: you can do it so:
   * `debug {'Something %s %s'} "very", "useful"`
   or so:

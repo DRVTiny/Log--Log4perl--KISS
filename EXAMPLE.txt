@@ -1,6 +1,6 @@
- perl -e 'use Log4perl::KISS; debug {"The cloudiness is $_[0]. The temp is %sC"} ["HIGH"], -2 '
+ perl -e 'use Log::Log4perl::KISS; debug {"The cloudiness is $_[0]. The temp is %sC"} ["HIGH"], -2 '
 22:00:42 | 20.04.2017 | 15418 | DEBUG | The cloudiness is HIGH. The temp is -2C
- perl -e 'use Log4perl::KISS; debug {"The temp is %sC"} -2'
+ perl -e 'use Log::Log4perl::KISS; debug {"The temp is %sC"} -2'
 22:01:19 | 20.04.2017 | 15467 | DEBUG | The temp is -2C
- perl -e 'use Log4perl::KISS; debug_ "Hello, world!"'
+ perl -e 'use Log::Log4perl::KISS; debug_ "Hello, world!"'
 22:01:38 | 20.04.2017 | 15468 | DEBUG | Hello, world!
