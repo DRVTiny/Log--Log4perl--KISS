@@ -67,6 +67,7 @@ It is... just simplest than [EASY](http://search.cpan.org/~mschilli/Log-Log4perl
   or just so:
   * `info_ "I have located the %s myself", "barrel of Ambrosia"`.
   * Simply `error_ 'Something awful','goes','wrong'` works well too :)
+* References and objects auto-stringification: you dont have to worry about what you pass to the logging function: reasonable solution to render your value as some string will be applied in all cases;
 * You can set and unset hooks to be fired after write to log. Hooks will receive reference to a message, which was logged (only message, without Log4perl layout formatting and headers)
 
 # HELPER FUNCTIONS
