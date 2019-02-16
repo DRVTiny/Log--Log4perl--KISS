@@ -3,8 +3,12 @@ use 5.16.1;
 use strict;
 use warnings;
 use utf8;
+use JSON;
+use Ref::Util qw(is_ref is_plain_arrayref is_plain_coderef is_plain_hashref);
+use Data::Dumper qw(Dumper);
 use constant DONE => 1;
-binmode $_, ':utf8' for *STDOUT, *STDERR;
+use constant NIL  => '<Nil>';
+BEGIN { binmode $_, ':utf8' for *STDOUT, *STDERR }
 use Exporter qw(import);
 
 use Log::Log4perl;
@@ -14,12 +18,12 @@ use Carp qw(confess);
 
 my @logSevs = qw/trace debug info warn error fatal/;
 my %logMethodDefs = (
-    'logdie'=>[undef,sub { confess($_[1]) }, $FATAL]
+    'logdie' => [undef, sub { confess($_[1]) }, $FATAL]
 );
 my @logMethods = keys %logMethodDefs;
 my %logSev2N = do {
     no strict 'refs';
-    map {my $U=uc($_); ($_=>$$U, uc($_)=>$$U) } @logSevs;
+    map {my $U = uc($_); ($_ => $$U, uc($_) => $$U) } @logSevs;
 };
 
 our @EXPORT = our @EXPORT_OK = (
@@ -35,28 +39,29 @@ our @EXPORT = our @EXPORT_OK = (
 
 Log::Log4perl->wrapper_register(__PACKAGE__);
 my %fileOpenModes = (
-    '>' => 'clobber',
-    '>>' => 'append',
-    'write' => 'clobber',
-    '|-' => 'pipe',
-    'append' => 'append',
-    'clobber' => 'clobber',
-    'pipe' => 'pipe'
+    '>'         => 'clobber',
+    '>>'        => 'append',
+    'write'     => 'clobber',
+    '|-'        => 'pipe',
+    'append'    => 'append',
+    'clobber'   => 'clobber',
+    'pipe'      => 'pipe'
 );
 
 my $useAppender = 'Screen';
 my $layPattern = q(%d{HH:mm:ss} | %d{dd.MM.yyyy} | %P | %p | %m%n);
 my $layPackage ='Log::Log4perl::Layout::PatternLayout';
 my $logLevel   = 'DEBUG';
-my %L4PAppenders=(
+my %L4PAppenders = (
     'Screen' => {
-        'stderr' 		=> 1,
-        'layout'                => $layPackage,
-        'layout.ConversionPattern' => $layPattern
+        'stderr' 		            => 1,
+        'layout'                    => $layPackage,
+        'layout.ConversionPattern'  => $layPattern
     },
     'File' => {
         'filename' 		=> undef,
         'mode'			=> undef,
+        'autoflush'     => 1,
         'layout'		=> $layPackage,
         'layout.ConversionPattern' => $layPattern,
         'recreate'		=> 1,
@@ -105,8 +110,8 @@ sub getL4PConfig {
     my $l4pConf=join("\n" =>
         "log4perl.rootLogger=${logLevel},${appndrType}"	,
         "${ptrn}=Log::Log4perl::Appender::${appndrType}",
-        map sprintf("${ptrn}.%s=%s", each $appndrConfig->{$appndrType}),
-                1..keys($appndrConfig->{$appndrType})
+        map sprintf("${ptrn}.%s=%s", each %{$appndrConfig->{$appndrType}}),
+                1..keys %{$appndrConfig->{$appndrType}}
     );
     return \$l4pConf
 }        
@@ -126,22 +131,45 @@ sub log_ {
                      : undef) 
                          or return;
                          
-    return 1 if $logSevN<$logger->level;
+    return DONE if $logSevN < $logger->level;
     
-    splice(  @_,  0,  1+(ref $_[1] eq 'ARRAY'),  $_[0]->(ref $_[1] eq 'ARRAY'?@{$_[1]}:())  )
-        if ref $_[0] eq 'CODE';
+    if ( is_plain_coderef($_[0]) ) {
+        my $arg1_is_arr = is_plain_arrayref($_[1]) ? 1 : 0;
+        splice(  @_,  0,  1 + $arg1_is_arr,  $_[0]->($arg1_is_arr ? @{$_[1]} : ()) )
+    }
         
-    my $logMsg=$#_
-                ? $_[0]=~/(?<!%)%[sdfg]/
-                    ? sprintf($_[0] => @_[1..$#_])
-                    : join(' ' => @_)
-                : $_[0];
+    my $logMsg = 
+        $#_
+            ? ( !ref($_[0]) and defined($_[0]) and $_[0] =~ /(?<!%)%[sdfg]/ )
+                ? do {
+                    my $pattern = shift; 
+                    sprintf($pattern => &stringify_list_elems)
+                  }
+                : join(' '	=> &stringify_list_elems)
+            : &stringify_list_elems;
+            
     $doBeforeLog and $doBeforeLog->($logMsg);
+    
     my $ret = $logger->log($logSevN => $logMsg);
+    
     if ( exists $afterLogHooks{$logSev}{'ord'} ) {
         ${$_}->(\$logMsg) for @{$afterLogHooks{$logSev}{'ord'}}
     }
+    
     return $doAfterLog ? $doAfterLog->($ret, $logMsg) : $ret;
+}
+
+sub stringify_list_elems {
+    state $json = JSON->new->pretty;
+    map  
+        is_ref($_) 
+            ? ( is_plain_arrayref($_) or is_plain_hashref($_) )
+                ? $json->encode($_) 
+                : Dumper($_) 
+            : defined($_) 
+                ? $_
+                : NIL, 
+        @_
 }
 
 {    
@@ -157,7 +185,7 @@ sub set_logger {
     my $L = shift;
     return $L
         ? (($L and ref($L) and blessed($L) and !(grep !$L->can($_), qw/debug info warn error fatal logdie/)) && ($pkgLoggers{scalar caller}=$L))
-        : ($pkgLoggers{scalar caller}=Log::Log4perl::initialized()?Log::Log4perl->get_logger():undef)
+        : ($pkgLoggers{scalar caller} = Log::Log4perl::initialized() ? Log::Log4perl->get_logger() : undef)
 }
 
 1;
