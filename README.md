@@ -25,6 +25,12 @@ Log::Log4perl::KISS - Human-friendly logging functions out-of-the-box. Just use 
     
     debug_ qw/any key be no key/;
     
+    # references auto-stringifcation
+    info_ 'Main cities in the USA: %s. Last 4 USA presidents: %s', 
+    	{"The Capital" => "Washington", "Califronia's main city" => "Los Angeles"},
+	[qw/Clinton Bush Obama Tramp/];
+	
+    
     # = Brief after-hooks overview =
     my $hook_id = after_error_hook_add sub { 
       $redis->publish( 'some_channel' => ${$_[0]} );
