@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use utf8;
 use JSON;
-use Ref::Util qw(is_ref is_plain_arrayref is_plain_coderef is_plain_hashref);
+use Ref::Util qw(is_ref is_plain_scalarref is_plain_arrayref is_plain_coderef is_plain_hashref);
 use Data::Dumper qw(Dumper);
 use constant DONE => 1;
 use constant NIL  => '<Nil>';
@@ -146,7 +146,7 @@ sub log_ {
                     sprintf($pattern => &stringify_list_elems)
                   }
                 : join(' '	=> &stringify_list_elems)
-            : &stringify_list_elems;
+            : (&stringify_list_elems)[0];
             
     $doBeforeLog and $doBeforeLog->($logMsg);
     
@@ -163,9 +163,11 @@ sub stringify_list_elems {
     state $json = JSON->new->pretty;
     map  
         is_ref($_) 
-            ? ( is_plain_arrayref($_) or is_plain_hashref($_) )
-                ? $json->encode($_) 
-                : Dumper($_) 
+            ? is_plain_scalarref($_)
+                ? ${$_}
+                : ( is_plain_arrayref($_) or is_plain_hashref($_) )
+                    ? $json->encode($_) 
+                    : Dumper($_)
             : defined($_) 
                 ? $_
                 : NIL, 
