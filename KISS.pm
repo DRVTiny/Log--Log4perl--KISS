@@ -186,7 +186,7 @@ sub log_ {
 
     my $logMsg =
         $#_
-            ? ( !ref($_[0]) and defined($_[0]) and $_[0] =~ /(?<!%)%[sdfg]/ )
+            ? ( !ref($_[0]) and defined($_[0]) and $_[0] =~ /(?<!%)%\d*[.-]?\d*[sdfgo]/ )
                 ? do {
                     my $pattern = shift;
                     sprintf($pattern => &stringify_list_elems)
